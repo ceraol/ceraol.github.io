@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Kalkulator Nilai Akhir</title>
+    <meta
+      name="description"
+      content="Hitung nilai akhir, grade, dan status kelulusan dari Tugas, UTS, dan UAS."
+    />
+    <style>
+      :root {
+        --bg: #0b0e14;
+        --card: #11161f;
+        --muted: #9aa4b2;
+        --text: #e6edf3;
+        --accent: #4f8cff;
+        --accent-2: #7ae0b8;
+        --danger: #ff6b6b;
+        --border: #1f2632;
+        --ok: #10b981;
+        --warn: #f59e0b;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f7fafc;
+          --card: #ffffff;
+          --muted: #475569;
+          --text: #0f172a;
+          --accent: #3b82f6;
+          --accent-2: #10b981;
+          --danger: #ef4444;
+          --border: #e2e8f0;
+          --ok: #059669;
+          --warn: #d97706;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial,
+          sans-serif;
+        background: radial-gradient(
+            1200px 800px at 80% -10%,
+            rgba(79, 140, 255, 0.18),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 600px at -10% 110%,
+            rgba(122, 224, 184, 0.18),
+            transparent 60%
+          ),
+          var(--bg);
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      .wrap {
+        width: 100%;
+        max-width: 720px;
+      }
+      .card {
+        background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.02),
+            rgba(255, 255, 255, 0)
+          ),
+          var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        backdrop-filter: blur(6px);
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: clamp(22px, 2.6vw, 28px);
+        letter-spacing: 0.2px;
+      }
+      p.sub {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      form {
+        display: grid;
+        gap: 14px;
+        margin-top: 8px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 160px;
+        gap: 10px;
+      }
+      @media (max-width: 560px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .field {
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        color: var(--text);
+        width: 100%;
+        font-size: 16px;
+        outline: none;
+      }
+      .field:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.25);
+      }
+      .help {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 6px;
+      }
+      .error {
+        color: var(--danger);
+        font-size: 12px;
+        margin-top: 6px;
+        display: none;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 6px;
+        flex-wrap: wrap;
+      }
+      button {
+        border: 0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 15px;
+      }
+      .primary {
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        color: white;
+      }
+      .ghost {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+      .result {
+        margin-top: 18px;
+        border-top: 1px dashed var(--border);
+        padding-top: 16px;
+        display: none;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      @media (max-width: 560px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .tile {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .k {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+      .v {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 0.3px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+        font-weight: 700;
+        margin-top: 8px;
+      }
+      .ok {
+        color: var(--ok);
+      }
+      .no {
+        color: var(--danger);
+      }
+      .note {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .weights {
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .sr-only {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card" aria-labelledby="title">
+        <h1 id="title">Kalkulator Nilai Akhir</h1>
+        <p class="sub">
+          Masukkan nilai Tugas, UTS, dan UAS (0–100). Kami akan menghitung Nilai
+          Akhir, Grade, dan Status kelulusan.
+        </p>
+
+        <form id="form" novalidate>
+          <div>
+            <label for="tugas">Nilai Tugas</label>
+            <input
+              class="field"
+              id="tugas"
+              name="tugas"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="100"
+              step="1"
+              placeholder="0–100"
+              required
+              aria-describedby="tugas-help tugas-error"
+            />
+            <div id="tugas-help" class="help">Bobot 30%</div>
+            <div id="tugas-error" class="error" role="alert">
+              Nilai tugas harus 0–100.
+            </div>
+          </div>
+
+          <div>
+            <label for="uts">Nilai UTS</label>
+            <input
+              class="field"
+              id="uts"
+              name="uts"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="100"
+              step="1"
+              placeholder="0–100"
+              required
+              aria-describedby="uts-help uts-error"
+            />
+            <div id="uts-help" class="help">Bobot 30%</div>
+            <div id="uts-error" class="error" role="alert">
+              Nilai UTS harus 0–100.
+            </div>
+          </div>
+
+          <div>
+            <label for="uas">Nilai UAS</label>
+            <input
+              class="field"
+              id="uas"
+              name="uas"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="100"
+              step="1"
+              placeholder="0–100"
+              required
+              aria-describedby="uas-help uas-error"
+            />
+            <div id="uas-help" class="help">Bobot 40%</div>
+            <div id="uas-error" class="error" role="alert">
+              Nilai UAS harus 0–100.
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="primary">Hitung</button>
+            <button type="button" class="ghost" id="btn-reset">Reset</button>
+          </div>
+
+          <p class="weights" aria-live="polite">
+            Pembobotan: Tugas 30% • UTS 30% • UAS 40%.
+          </p>
+
+          <section class="result" id="result" aria-live="polite">
+            <div class="grid">
+              <div class="tile">
+                <div class="k">Nilai Akhir</div>
+                <div class="v" id="nilai-akhir">—</div>
+                <div class="note">
+                  Dibulatkan ke bawah (seperti <code>int()</code> di Python).
+                </div>
+              </div>
+              <div class="tile">
+                <div class="k">Grade</div>
+                <div class="v" id="grade">—</div>
+                <div class="note">A ≥ 85 • B ≥ 75 • C ≥ 65 • D &lt; 65</div>
+              </div>
+              <div class="tile">
+                <div class="k">Status</div>
+                <div class="v" id="status">—</div>
+                <div class="badge" id="status-badge" aria-hidden="true">
+                  <span class="sr-only" id="status-label"
+                    >Status Kelulusan</span
+                  >
+                  <span id="status-emoji">⬜</span>
+                  <span id="status-text">—</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </form>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById("form");
+      const fields = ["tugas", "uts", "uas"].map((id) =>
+        document.getElementById(id)
+      );
+      const errors = {
+        tugas: document.getElementById("tugas-error"),
+        uts: document.getElementById("uts-error"),
+        uas: document.getElementById("uas-error"),
+      };
+      const resultEl = document.getElementById("result");
+      const nilaiAkhirEl = document.getElementById("nilai-akhir");
+      const gradeEl = document.getElementById("grade");
+      const statusEl = document.getElementById("status");
+      const statusBadge = document.getElementById("status-badge");
+      const statusEmoji = document.getElementById("status-emoji");
+      const statusText = document.getElementById("status-text");
+      const btnReset = document.getElementById("btn-reset");
+
+      function clamp(val, min = 0, max = 100) {
+        if (Number.isNaN(val)) return null;
+        return Math.min(Math.max(val, min), max);
+      }
+
+      function validateField(input) {
+        const id = input.id;
+        const raw = Number(input.value);
+        const clamped = clamp(raw);
+        if (clamped === null) {
+          errors[
+            id
+          ].textContent = `Nilai ${id.toUpperCase()} harus berupa angka.`;
+          errors[id].style.display = "block";
+          return null;
+        }
+        // If user typed outside range, we clamp & show gentle hint
+        if (raw !== clamped) {
+          input.value = clamped;
+          errors[
+            id
+          ].textContent = `Nilai diubah menjadi ${clamped} (batas 0–100).`;
+          errors[id].style.display = "block";
+        } else {
+          errors[id].style.display = "none";
+        }
+        return clamped;
+      }
+
+      function hitung(tugas, uts, uas) {
+        const bobot_tugas = tugas * (30 / 100);
+        const bobot_uts = uts * (30 / 100);
+        const bobot_uas = uas * (40 / 100);
+        // match Python int() behavior for positive numbers
+        const nilai_akhir = Math.floor(bobot_tugas + bobot_uts + bobot_uas);
+        let grade = "D";
+        if (nilai_akhir >= 85) grade = "A";
+        else if (nilai_akhir >= 75) grade = "B";
+        else if (nilai_akhir >= 65) grade = "C";
+        const status = nilai_akhir >= 75 ? "Lulus" : "Tidak Lulus";
+        return { nilai_akhir, grade, status };
+      }
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const vals = fields.map(validateField);
+        if (vals.some((v) => v === null)) return;
+
+        const [tugas, uts, uas] = vals;
+        const { nilai_akhir, grade, status } = hitung(tugas, uts, uas);
+
+        nilaiAkhirEl.textContent = String(nilai_akhir);
+        gradeEl.textContent = grade;
+        statusEl.textContent = status;
+        statusBadge.style.display = "inline-flex";
+        if (status === "Lulus") {
+          statusBadge.classList.remove("no");
+          statusBadge.classList.add("ok");
+          statusEmoji.textContent = "✅";
+          statusText.textContent = "Lulus";
+        } else {
+          statusBadge.classList.remove("ok");
+          statusBadge.classList.add("no");
+          statusEmoji.textContent = "❌";
+          statusText.textContent = "Tidak Lulus";
+        }
+
+        resultEl.style.display = "block";
+      });
+
+      fields.forEach((inp) => {
+        inp.addEventListener("blur", () => validateField(inp));
+        inp.addEventListener("input", () => {
+          // hide error while typing until it blurs again
+          errors[inp.id].style.display = "none";
+        });
+      });
+
+      btnReset.addEventListener("click", () => {
+        form.reset();
+        Object.values(errors).forEach((e) => (e.style.display = "none"));
+        resultEl.style.display = "none";
+        statusBadge.style.display = "none";
+      });
+    </script>
+  </body>
+</html>
