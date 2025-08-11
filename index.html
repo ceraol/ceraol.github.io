@@ -1,5 +1,49 @@
-COUNTER PEMILOS VER 2
+<script type="text/javascript">
+  var gk_isXlsx = false;
+  var gk_xlsxFileLookup = {};
+  var gk_fileData = {};
+  function filledCell(cell) {
+    return cell !== "" && cell != null;
+  }
+  function loadFileData(filename) {
+    if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+      try {
+        var workbook = XLSX.read(gk_fileData[filename], { type: "base64" });
+        var firstSheetName = workbook.SheetNames[0];
+        var worksheet = workbook.Sheets[firstSheetName];
 
+        // Convert sheet to JSON to filter blank rows
+        var jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          header: 1,
+          blankrows: false,
+          defval: "",
+        });
+        // Filter out blank rows (rows where all cells are empty, null, or undefined)
+        var filteredData = jsonData.filter((row) => row.some(filledCell));
+
+        // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+        var headerRowIndex = filteredData.findIndex(
+          (row, index) =>
+            row.filter(filledCell).length >=
+            filteredData[index + 1]?.filter(filledCell).length
+        );
+        // Fallback
+        if (headerRowIndex === -1 || headerRowIndex > 25) {
+          headerRowIndex = 0;
+        }
+
+        // Convert filtered JSON back to CSV
+        var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+        csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+        return csv;
+      } catch (e) {
+        console.error(e);
+        return "";
+      }
+    }
+    return gk_fileData[filename] || "";
+  }
+</script>
 <!DOCTYPE html>
 <html lang="id">
   <head>
@@ -890,6 +934,20 @@ COUNTER PEMILOS VER 2
           >
             🏆 Lihat Hasil
           </button>
+          <button
+            id="saveResultsBtn"
+            onclick="saveResults()"
+            class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center gap-2"
+          >
+            💾 Simpan Hasil
+          </button>
+          <button
+            id="loadResultsBtn"
+            onclick="loadResults()"
+            class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center gap-2"
+          >
+            📂 Muat Hasil
+          </button>
         </div>
       </div>
     </div>
@@ -971,6 +1029,70 @@ COUNTER PEMILOS VER 2
           );
           candidateCard.classList.add("vote-flash");
           setTimeout(() => candidateCard.classList.remove("vote-flash"), 300);
+        }
+      }
+
+      function saveResults() {
+        const results = {
+          election: "Pemilihan Ketua Umum OSIS 2025/2026",
+          timestamp: new Date().toISOString(),
+          candidates: {},
+        };
+
+        // Calculate totals and structure data
+        let totalVotes = 0;
+        for (let candidate = 1; candidate <= 5; candidate++) {
+          let candidateTotal = 0;
+          const classVotes = {};
+
+          for (let classNum of [32, 33, 34]) {
+            const voteCount = votes[candidate][classNum];
+            classVotes[`Angkatan ${classNum}`] = voteCount;
+            candidateTotal += voteCount;
+          }
+
+          results.candidates[candidates[candidate]] = {
+            candidateNumber: candidate,
+            totalVotes: candidateTotal,
+            classBreakdown: classVotes,
+          };
+
+          totalVotes += candidateTotal;
+        }
+
+        results.totalVotes = totalVotes;
+
+        // Save to localStorage
+        localStorage.setItem("pemilos_results", JSON.stringify(results));
+        alert("Hasil telah disimpan ke localStorage!");
+      }
+
+      // Load results from localStorage
+      function loadResults() {
+        const savedData = localStorage.getItem("pemilos_results");
+        if (savedData) {
+          const results = JSON.parse(savedData);
+
+          // Update votes data structure
+          for (let candidate = 1; candidate <= 5; candidate++) {
+            const candidateName = candidates[candidate];
+            const candidateData = results.candidates[candidateName];
+
+            if (candidateData) {
+              votes[candidate][32] =
+                candidateData.classBreakdown["Angkatan 32"] || 0;
+              votes[candidate][33] =
+                candidateData.classBreakdown["Angkatan 33"] || 0;
+              votes[candidate][34] =
+                candidateData.classBreakdown["Angkatan 34"] || 0;
+            }
+          }
+
+          // Update display
+          updateDisplay();
+          alert("Hasil berhasil dimuat dari localStorage!");
+        } else {
+          alert("Tidak ada data hasil yang tersimpan di localStorage.");
         }
       }
 
@@ -1372,7 +1494,6 @@ COUNTER PEMILOS VER 2
         const isShift = event.shiftKey;
 
         // Vote shortcuts mapping
-
         const shortcutMap = {
           // Quinna Alfisya Bahtiar (Candidate 1)
           q: { candidate: 1, class: 32 },
